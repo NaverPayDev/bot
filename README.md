@@ -180,42 +180,63 @@ LLM이 사용자의 의도를 정확히 파악하고, 원하는 형식과 내용
 
 ## 🤖 주요 AI 및 관련 개념 설명
 
-Pie Bot은 최신 AI 기술을 활용하여 개발자에게 유용한 정보를 제공합니다. Pie Bot의 핵심 작동 방식을 이해하는 데 도움이 되도록 주요 AI 관련 개념들을 설명합니다.
+Pie Bot은 최신 AI 기술을 활용합니다.
 
 ### 1. LLM (Large Language Models / 대규모 언어 모델)
 
-- **설명:** LLM은 수십억 개 이상의 매우 큰 데이터셋(주로 텍스트와 코드)을 학습하여, 인간과 유사한 방식으로 언어를 이해하고, 요약하고, 번역하고, 예측하고, 생성할 수 있는 인공지능 모델입니다. 질문에 답변하거나, 글을 작성하거나, 코드를 짜는 등 다양한 작업을 수행할 수 있습니다.
-- **Pie Bot 적용:** Pie Bot은 Google의 **Gemini 모델**을 LLM으로 사용합니다. 이 모델은 사용자의 질문, 코드 편집기의 현재 맥락, 그리고 RAG를 통해 검색된 Naver Pay Dev 내부 코드 조각들을 종합적으로 이해하고, 이를 바탕으로 유용한 설명, 코드 예시, 또는 해결책을 생성하는 핵심 두뇌 역할을 합니다.
+- **설명:** LLM은 방대한 양의 텍스트 데이터를 학습하여 인간과 유사한 방식으로 언어를 이해하고, 요약하고, 번역하고, 예측하고, 생성할 수 있는 인공지능 모델입니다.
+- **Pie Bot 적용:** Pie Bot은 Google의 Gemini 모델을 LLM으로 사용합니다. 사용자의 질문, 코드 맥락, 검색된 참고 자료 등을 이해하고, 이를 바탕으로 유용한 설명과 코드 예시를 생성하는 핵심 두뇌 역할을 합니다.
+- **더 알아보기:**
+  - [세계적 수준의 Google AI를 기반으로 한 대규모 언어 모델](https://cloud.google.com/ai/llms?hl=ko)
+  - [Large language model (Wikipedia)](https://en.wikipedia.org/wiki/Large_language_model)
 
 ### 2. RAG (Retrieval Augmented Generation / 검색 증강 생성)
 
-- **설명:** RAG는 LLM이 답변을 생성할 때, LLM 자체의 방대한 학습 지식에 더하여, **외부의 특정 문서나 데이터베이스에서 현재 질문과 관련된 정보를 실시간으로 검색(Retrieve)하여 이 정보를 LLM에게 함께 제공(Augment)**함으로써 답변의 정확성, 관련성, 최신성을 향상시키는 기술입니다. LLM의 환각(Hallucination)을 줄이고, 특정 도메인에 대한 전문성을 높이는 데 매우 효과적입니다.
-- **Pie Bot 적용:** Pie Bot은 Naver Pay Dev 코드베이스에 대한 특화된 지식을 갖기 위해 RAG를 핵심적으로 사용합니다.
-  1. **데이터 준비 (Embedding):** `scripts/embed_naverpay_code.js` 스크립트를 통해 Naver Pay Dev 코드 저장소의 내용을 임베딩(아래 설명 참고)하여 `data/naverpay_embeddings.json`이라는 Pie Bot만의 지식 베이스(Vector Store)를 구축합니다.
-  2. **검색 (Retrieve):** 사용자의 질문이 들어오면, 이 지식 베이스에서 질문의 의도와 가장 의미적으로 유사한 Naver Pay Dev 코드 조각(문서)들을 실시간으로 찾아냅니다.
-  3. **증강 및 생성 (Augment & Generate):** 검색된 코드 조각들을 현재 편집기 컨텍스트(열린 파일, 주변 코드 등)와 함께 Gemini 모델에게 전달합니다. Gemini는 이 "증강된" 정보를 바탕으로, Naver Pay 코드에 대해 훨씬 더 정확하고 맥락에 맞는 답변을 생성합니다.
+- **설명:** RAG는 LLM이 답변을 생성할 때, LLM 자체의 학습된 지식뿐만 아니라 외부의 특정 문서나 데이터베이스에서 관련된 정보를 실시간으로 검색(Retrieve)하여 이 정보를 LLM에게 함께 제공(Augment)함으로써 답변의 정확성과 관련성을 높이는 기술입니다.
+- **Pie Bot 적용:** Pie Bot은 Naver Pay Dev 코드베이스에 대한 특화된 지식을 갖기 위해 RAG를 사용합니다.
+  1. **데이터 준비:** `scripts/embed_naverpay_code.js`를 통해 Naver Pay Dev 코드 저장소의 내용을 임베딩하여 `data/naverpay_embeddings.json`이라는 지식 베이스를 구축합니다.
+  2. **검색:** 사용자의 질문이 들어오면, 이 지식 베이스에서 질문과 가장 관련된 코드 조각들을 검색합니다.
+  3. **증강 및 생성:** 검색된 코드 조각들을 현재 편집기 컨텍스트와 함께 Gemini 모델에게 전달하여, Naver Pay 코드에 특화된 답변을 생성하도록 합니다.
+- **더 알아보기:**
+  - [Retrieval Augmented Generation (RAG) (Pinecone)](https://www.pinecone.io/learn/retrieval-augmented-generation/)
+  - [RAG(검색 증강 생성)란? – LLM 단점을 보완하는 기술](https://modulabs.co.kr/blog/retrieval-augmented-generation)
+  - [Retrieval Augmented Generation (RAG) Concepts (Langchain Docs)](https://python.langchain.com/v0.2/docs/concepts/#retrieval-augmented-generation-rag)
 
 ### 3. 텍스트 임베딩 (Text Embeddings)
 
-- **설명:** 텍스트(단어, 문장, 코드 조각, 문서 전체 등)를 컴퓨터가 이해하고 계산할 수 있도록 조밀한 숫자 벡터(Vector, 숫자의 배열)로 변환하는 과정입니다. 이 벡터는 텍스트의 의미론적 정보(문맥, 의미, 뉘앙스 등)를 다차원 공간의 한 점으로 표현합니다. 의미가 비슷한 텍스트들은 이 벡터 공간에서 서로 가까운 위치에 매핑됩니다.
-- **Pie Bot 적용:** Naver Pay Dev 코드 저장소의 각 코드 파일(현재 청킹 단위)과 사용자의 질문을 Gemini의 `embedding-001` 모델을 사용하여 고유한 벡터로 변환합니다. 이를 통해 단순히 키워드 일치를 넘어, 의미적으로 유사한 내용을 찾아낼 수 있는 기반을 마련합니다.
+- **설명:** 텍스트(코드, 문장 등)를 의미론적 정보를 담고 있는 숫자 벡터(Vector, 숫자의 배열)로 변환하는 과정입니다. 의미가 비슷한 텍스트는 벡터 공간에서 서로 가까운 위치에 표현됩니다.
+- **Pie Bot 적용:** Naver Pay Dev 코드의 각 파일(청크)과 사용자의 질문을 Gemini의 `embedding-001` 모델을 사용해 벡터로 만듭니다. 이를 통해 의미 기반의 검색이 가능해집니다.
+- **더 알아보기:**
+  - [Embeddings Guide (Google AI for Developers)](https://ai.google.dev/docs/embeddings_guide)
+  - [What are Embeddings? (Hugging Face Blog - 영어지만 그림 설명 좋음)](https://huggingface.co/blog/getting-started-with-embeddings)
 
 ### 4. 벡터 검색 (Vector Search)
 
-- **설명:** 주어진 쿼리 벡터(예: 사용자의 질문을 임베딩한 벡터)와 가장 유사한 벡터들을 대규모 벡터 데이터베이스에서 찾는 과정입니다. 코사인 유사도와 같은 척도를 사용하여 벡터 간의 "거리" 또는 "유사성"을 계산합니다.
-- **Pie Bot 적용:** 사용자의 질문을 벡터로 변환한 후, 이 질문 벡터를 기준으로 `data/naverpay_embeddings.json`에 저장된 수많은 Naver Pay Dev 코드 벡터들 중에서 의미적으로 가장 유사한(즉, 질문에 가장 관련성이 높은) 코드 조각들을 찾아냅니다. 현재는 로드된 JSON 데이터 내 모든 벡터와 코사인 유사도를 계산하여 상위 결과를 찾는 방식으로 구현되어 있습니다.
+- **설명:** 주어진 질문 벡터와 가장 유사한 벡터들을 데이터베이스에서 찾는 과정입니다.
+- **Pie Bot 적용:** 사용자의 질문 벡터를 기준으로, `data/naverpay_embeddings.json`에 저장된 수많은 코드 벡터들 중에서 가장 의미적으로 유사한 코드 조각(벡터)들을 찾아냅니다. 현재는 코사인 유사도를 사용하여 모든 저장된 벡터와 비교하는 방식으로 구현되어 있습니다.
+- **더 알아보기:**
+  - [What is Vector Search? (Pinecone)](https://www.pinecone.io/learn/vector-search/)
+  - [What is vector search? (Elastic)](https://www.elastic.co/what-is/vector-search)
 
 ### 5. 코사인 유사도 (Cosine Similarity)
 
-- **설명:** 두 벡터 간의 방향적 유사성을 측정하는 수학적 방법입니다. 두 벡터가 이루는 각도의 코사인 값을 계산하며, 값은 -1에서 1 사이입니다. 1에 가까울수록 두 벡터는 거의 같은 방향을 가리키므로 매우 유사하다고 판단하고, 0에 가까우면 직교(관련성 낮음), -1에 가까우면 반대 방향을 의미합니다. 텍스트 임베딩에서는 주로 0과 1 사이의 값을 사용합니다.
-- **Pie Bot 적용:** 벡터 검색 단계에서 사용자의 질문 벡터와 저장된 코드 벡터가 얼마나 의미적으로 유사한지를 판단하는 핵심 기준으로 사용됩니다.
+- **설명:** 두 벡터 간의 유사성을 측정하는 방법 중 하나로, 두 벡터 사이 각도의 코사인 값을 계산합니다. 값은 -1에서 1 사이이며, 1에 가까울수록 두 벡터가 가리키는 방향이 유사하다는 의미입니다.
+- **Pie Bot 적용:** 벡터 검색 단계에서 질문 벡터와 코드 벡터가 얼마나 의미적으로 유사한지를 판단하는 기준으로 사용됩니다.
+- **더 알아보기:**
+  - [Cosine similarity (Wikipedia)](https://en.wikipedia.org/wiki/Cosine_similarity)
+  - [코사인 유사도 (위키백과)](https://ko.wikipedia.org/wiki/%EC%BD%94%EC%82%AC%EC%9D%B8_%EC%9C%A0%EC%82%AC%EB%8F%84)
 
 ### 6. 프롬프트 엔지니어링 (Prompt Engineering)
 
-- **설명:** LLM으로부터 원하는 고품질의 답변을 얻어내기 위해 입력(프롬프트)을 효과적으로 설계하고 구성하는 기술 및 과정을 의미합니다. 여기에는 AI의 역할(페르소나) 정의, 명확하고 구체적인 지시사항 제공, 필요한 정보(컨텍스트) 적절히 주입, 원하는 출력 형식 지정, 몇 가지 예시(Few-shot) 제공 등이 포함될 수 있습니다.
-- **Pie Bot 적용:** `src/prompts.ts` 파일에 정의된 프롬프트들은 Pie Bot의 페르소나("Naver Pay Dev 코드 전문가" 등), 답변 스타일, 반드시 참고해야 할 정보(RAG 결과, 에디터 컨텍스트, 대화 이력), 따라야 할 지침(예: "ESModule 형식으로 답변", "환각 방지 지침") 등을 Gemini 모델에게 상세히 전달하는 역할을 합니다. 프롬프트의 품질은 Pie Bot 답변의 품질과 직결되므로 지속적인 개선이 필요합니다.
+- **설명:** LLM에게 원하는 결과를 얻어내기 위해 입력(프롬프트)을 효과적으로 설계하고 구성하는 기술입니다. AI의 역할 정의, 명확한 지시, 필요한 정보(컨텍스트) 제공, 출력 형식 지정 등이 포함됩니다.
+- **Pie Bot 적용:** `src/prompts.ts` 파일에 정의된 프롬프트들은 Pie Bot의 페르소나, 답변 스타일, 참고해야 할 정보(RAG 결과, 에디터 컨텍스트, 대화 이력), 따라야 할 지침 등을 Gemini 모델에게 전달하는 역할을 합니다.
+- **더 알아보기:**
+  - [Introduction to prompt design (Google AI for Developers)](https://ai.google.dev/docs/prompt_intro)
+  - [Prompt engineering (OpenAI)](https://platform.openai.com/docs/guides/prompt-engineering)
 
 ### 7. Reranking (검색 결과 순위 재조정)
 
-- **설명:** 1차적으로 검색된 결과 목록(예: 벡터 검색으로 찾은 상위 N개)에 대해, 추가적인 기준이나 더 가벼운 모델을 사용하여 사용자의 실제 의도와 더욱 잘 맞는 순서로 결과의 우선순위를 재조정하는 과정입니다. 검색 결과의 최종 품질을 높이는 데 기여합니다.
-- **Pie Bot 적용:** 코사인 유사도만으로 상위 결과를 추출한 후, 해당 결과들의 파일 경로에 사용자 질문의 키워드가 포함되어 있는지, 테스트 관련 코드인지, `index` 파일과 같이 중요한 진입점 파일인지 등의 추가적인 휴리스틱 규칙을 적용하여 점수를 재계산합니다. 이를 통해 LLM에게 제공할 최종 참고 자료의 순위를 보다 정교하게 조정하여, 단순한 의미적 유사성을 넘어 실질적으로 더 유용하거나 정확한 정보를 우선적으로 참고하도록 유도합니다.
+- **설명:** 1차적으로 검색된 결과 목록(예: 벡터 검색 결과)에 대해, 추가적인 기준이나 모델을 사용하여 사용자의 실제 의도와 더 잘 맞는 순서로 결과를 재정렬하는 과정입니다.
+- **Pie Bot 적용:** 코사인 유사도만으로 상위 결과를 뽑은 후, 해당 결과들의 파일 경로, 내용에 사용자 질문의 키워드가 포함되어 있는지, 테스트 코드인지, `index` 파일인지 등의 추가적인 휴리스틱 규칙을 적용하여 점수를 재계산하고 최종적으로 LLM에게 제공할 참고 자료의 순위를 조정합니다.
+- **더 알아보기:**
+  - [Improving RAG Performance with Rerankers (Pinecone)](https://www.pinecone.io/learn/series/rag/rerankers/)
