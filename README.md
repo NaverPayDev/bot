@@ -215,16 +215,16 @@ Pie Bot은 최신 AI 기술을 활용합니다.
 - **설명:** 주어진 질문 벡터와 가장 유사한 벡터들을 데이터베이스에서 찾는 과정입니다.
 - **Pie Bot 적용:** 사용자의 질문 벡터를 기준으로, `data/naverpay_embeddings.json`에 저장된 수많은 코드 벡터들 중에서 가장 의미적으로 유사한 코드 조각(벡터)들을 찾아냅니다. 현재는 코사인 유사도를 사용하여 모든 저장된 벡터와 비교하는 방식으로 구현되어 있습니다.
 - **더 알아보기:**
-  - [What is Vector Search? (Pinecone)](https://www.pinecone.io/learn/vector-search/)
   - [What is vector search? (Elastic)](https://www.elastic.co/what-is/vector-search)
+  - [벡터 검색 이란 무엇인가요](https://www.ibm.com/kr-ko/think/topics/vector-search)
 
 ### 5. 코사인 유사도 (Cosine Similarity)
 
 - **설명:** 두 벡터 간의 유사성을 측정하는 방법 중 하나로, 두 벡터 사이 각도의 코사인 값을 계산합니다. 값은 -1에서 1 사이이며, 1에 가까울수록 두 벡터가 가리키는 방향이 유사하다는 의미입니다.
 - **Pie Bot 적용:** 벡터 검색 단계에서 질문 벡터와 코드 벡터가 얼마나 의미적으로 유사한지를 판단하는 기준으로 사용됩니다.
 - **더 알아보기:**
-  - [Cosine similarity (Wikipedia)](https://en.wikipedia.org/wiki/Cosine_similarity)
   - [코사인 유사도 (위키백과)](https://ko.wikipedia.org/wiki/%EC%BD%94%EC%82%AC%EC%9D%B8_%EC%9C%A0%EC%82%AC%EB%8F%84)
+  - [코사인 유사도](https://wikidocs.net/24603)
 
 ### 6. 프롬프트 엔지니어링 (Prompt Engineering)
 
