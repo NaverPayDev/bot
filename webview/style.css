@@ -1,0 +1,115 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  padding: 0 20px;
+  margin: 0;
+  color: var(--vscode-editor-foreground);
+  background-color: var(--vscode-editor-background);
+}
+
+h1 {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+.message {
+  margin-bottom: 1.5em;
+  padding: 0.8em 1em;
+  border-radius: 5px;
+  line-height: 1.6;
+}
+
+.user-query {
+  background-color: var(--vscode-sideBar-background, #f3f3f3);
+  border-left: 4px solid var(--vscode-button-background, #0e639c);
+  color: var(--vscode-sideBar-foreground); /* 글자색 추가 */
+}
+
+.bot-answer {
+  background-color: var(
+    --vscode-editorWidget-background,
+    #ffffff
+  ); /* 에디터 위젯 배경 사용 */
+  border-left: 4px solid var(--vscode-charts-green, #8bc34a);
+}
+
+.bot-answer strong {
+  /* Pie Bot: 부분 */
+  color: var(--vscode-editor-foreground);
+}
+
+strong {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5em;
+}
+
+pre {
+  background-color: var(--vscode-textCodeBlock-background, #f5f5f5);
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--vscode-textPreformat-foreground); /* pre 태그 글자색 */
+}
+
+code {
+  font-family: var(
+    --vscode-editor-font-family,
+    "Courier New",
+    Courier,
+    monospace
+  );
+}
+
+#chat-messages {
+  padding-bottom: 20px;
+}
+
+/* 다크 테마 대응 (이미 변수로 처리되어 대부분 자동 대응) */
+body.vscode-dark .user-query {
+  background-color: var(--vscode-sideBar-background);
+}
+body.vscode-dark .bot-answer {
+  background-color: var(--vscode-editorWidget-background);
+}
+body.vscode-dark pre {
+  background-color: var(--vscode-textCodeBlock-background);
+}
+
+#input-area {
+  display: flex;
+  padding: 10px 0;
+  border-top: 1px solid var(--vscode-editorWidget-border, #ccc);
+  background-color: var(--vscode-editor-background);
+  position: sticky;
+  bottom: 0;
+}
+
+#user-input {
+  flex-grow: 1;
+  padding: 8px;
+  border: 1px solid var(--vscode-input-border, #ccc);
+  border-radius: 4px;
+  resize: none;
+  font-family: inherit;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+}
+
+#send-button {
+  padding: 8px 15px;
+  margin-left: 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--vscode-button-background, #0e639c);
+  color: var(--vscode-button-foreground, white);
+  cursor: pointer;
+}
+
+#send-button:hover {
+  background-color: var(--vscode-button-hoverBackground, #1177bb);
+}

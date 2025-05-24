@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; 
+                   style-src {{cspSource}} 'unsafe-inline'; 
+                   script-src 'nonce-{{nonce}}'; 
+                   img-src {{cspSource}} https:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="{{styleUri}}" />
+    <title>Pie Bot Chat</title>
+  </head>
+  <body>
+    <h1>🥧 Pie Bot</h1>
+    <div id="chat-messages">
+      <div class="message bot-answer">
+        <strong>Pie Bot:</strong> 안녕하세요! 코드에서 '// @pie'로 질문해주세요.
+      </div>
+    </div>
+    <div id="input-area">
+      <textarea
+        id="user-input"
+        placeholder="여기에 추가 질문을 입력하세요..."
+        rows="3"
+      ></textarea>
+      <button id="send-button">전송</button>
+    </div>
+    <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+  </body>
+</html>
