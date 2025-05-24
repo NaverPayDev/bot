@@ -1,9 +1,7 @@
-// 이 스크립트는 웹뷰 내부에서 실행됩니다.
 (function () {
-  const vscode = acquireVsCodeApi(); // VSCode API 접근 객체
+  const vscode = acquireVsCodeApi();
   const messagesDiv = document.getElementById("chat-messages");
 
-  // HTML 이스케이프 함수
   function escapeHtml(unsafe) {
     if (typeof unsafe !== "string") {
       return "";
@@ -16,7 +14,6 @@
       .replace(/'/g, "&#039;");
   }
 
-  // 코드 블록을 pre 태그로 감싸고, 나머지는 일반 텍스트로 처리하는 간단한 포맷터
   function formatAnswerForDisplay(text) {
     let formattedText = "";
     const codeBlockRegex = /```typescript\s*([\s\S]*?)\s*```|```([\s\S]*?)```/g;
