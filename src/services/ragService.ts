@@ -9,6 +9,7 @@ const FINAL_TOP_K = 3;
 interface EmbeddingData {
   repository: string;
   filePath: string;
+  symbol?: string;
   content: string;
   vector: number[];
   norm: number;
@@ -155,6 +156,7 @@ export function searchAndRerank(
     let rerankScore = candidate.similarity!; // 기본 점수는 코사인 유사도
     const lowerFilePath = candidate.filePath.toLowerCase();
     const lowerContent = candidate.content.toLowerCase();
+    const lowerSymbol = candidate.symbol ? candidate.symbol.toLowerCase() : "";
 
     // 키워드 일치 여부에 따른 점수 가산
     keywords.forEach((keyword) => {
@@ -163,6 +165,9 @@ export function searchAndRerank(
       }
       if (lowerContent.includes(keyword)) {
         rerankScore += 0.05; // 내용에 키워드 포함 시 가점
+      }
+      if (lowerSymbol.includes(keyword)) {
+        rerankScore += 0.1; // 심볼명에 키워드 포함 시 가점
       }
     });
 
@@ -191,6 +196,7 @@ export function searchAndRerank(
     rerankedResults.slice(0, 5).map((r) => ({
       repo: r.repository,
       path: r.filePath,
+      symbol: r.symbol,
       score: r.rerankScore!.toFixed(4), // 소수점 4자리까지 표시
     }))
   );

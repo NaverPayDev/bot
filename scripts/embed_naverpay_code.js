@@ -4,6 +4,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const fs = require("fs-extra");
 const path = require("path");
 const { globSync } = require("glob");
+const ts = require("typescript");
 
 // ================== 설정 (❗️❗️❗️ 반드시 수정하세요 ❗️❗️❗️) ==================
 /**
@@ -125,6 +126,63 @@ async function embedTextsBatch(texts) {
 }
 
 /**
+ * 주어진 JS/TS 코드에서 상위 레벨 함수 및 클래스 선언을 추출하여
+ * 각각의 코드 조각과 심볼 이름을 반환합니다. 추출된 심볼이 없으면
+ * 파일 전체 내용을 하나의 청크로 취급합니다.
+ * @param {string} content 원본 파일 내용
+ * @param {string} ext 파일 확장자 ('.js', '.ts' 등)
+ * @returns {{code: string, symbol: string|null}[]} 추출된 청크 배열
+ */
+function chunkJsTsFile(content, ext) {
+  const scriptKind = ext.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  const source = ts.createSourceFile("temp" + ext, content, ts.ScriptTarget.Latest, true, scriptKind);
+  const chunks = [];
+
+  function addNode(node, name) {
+    const code = node.getText(source);
+    if (code.trim().length > 0) {
+      chunks.push({ code, symbol: name });
+    }
+  }
+
+  for (const stmt of source.statements) {
+    if (ts.isFunctionDeclaration(stmt) && stmt.body) {
+      addNode(stmt, stmt.name ? stmt.name.getText(source) : "anonymous");
+    } else if (ts.isClassDeclaration(stmt) && stmt.name) {
+      addNode(stmt, stmt.name.getText(source));
+    } else if (ts.isVariableStatement(stmt)) {
+      stmt.declarationList.declarations.forEach((decl) => {
+        if (
+          decl.initializer &&
+          (ts.isArrowFunction(decl.initializer) || ts.isFunctionExpression(decl.initializer))
+        ) {
+          addNode(stmt, decl.name.getText(source));
+        }
+      });
+    }
+  }
+
+  if (chunks.length === 0) {
+    chunks.push({ code: content, symbol: null });
+  }
+
+  return chunks;
+}
+
+/**
+ * 파일 확장자에 맞추어 코드 청크를 추출합니다.
+ * JS/TS 계열은 함수/클래스 단위로 분할하고 그 외는 파일 전체를 사용합니다.
+ * @param {string} content 파일 내용
+ * @param {string} ext 확장자
+ */
+function extractChunks(content, ext) {
+  if ([".js", ".jsx", ".ts", ".tsx"].includes(ext)) {
+    return chunkJsTsFile(content, ext);
+  }
+  return [{ code: content, symbol: null }];
+}
+
+/**
  *코드베이스를 읽고, 임베딩을 생성하여 JSON 파일로 저장합니다.
  */
 async function processCodebase() {
@@ -161,13 +219,17 @@ async function processCodebase() {
           if (stats.size > 0 && stats.size < MAX_FILE_SIZE_BYTES) {
             const content = await fs.readFile(file, "utf-8");
             if (content.trim().length > 0) {
-              // 실제 내용이 있는 경우만 추가
-              allCodeChunks.push({
-                repository: repo.name,
-                filePath: path.relative(repo.path, file), // 저장소 루트 기준 상대 경로
-                content: content,
-              });
-              repoChunkCount++;
+              const relativePath = path.relative(repo.path, file);
+              const chunks = extractChunks(content, ext);
+              for (const chunk of chunks) {
+                allCodeChunks.push({
+                  repository: repo.name,
+                  filePath: relativePath,
+                  symbol: chunk.symbol || undefined,
+                  content: chunk.code,
+                });
+                repoChunkCount++;
+              }
             }
           }
         } catch (err) {
@@ -201,12 +263,14 @@ async function processCodebase() {
   for (let i = 0; i < allCodeChunks.length; i += BATCH_SIZE) {
     const batch = allCodeChunks.slice(i, i + BATCH_SIZE);
     // 임베딩할 텍스트는 파일 경로와 내용을 포함하여 컨텍스트를 강화
-    const textsToEmbed = batch.map(
-      (chunk) =>
-        `Repository: ${chunk.repository}\nFile Path: ${
-          chunk.filePath
-        }\n\nCode Content:\n${chunk.content.substring(0, 18000)}` // Gemini API 입력 길이 제한 고려
-    );
+    const textsToEmbed = batch.map((chunk) => {
+      const symbolLine = chunk.symbol ? `Symbol: ${chunk.symbol}\n` : "";
+      return (
+        `Repository: ${chunk.repository}\nFile Path: ${chunk.filePath}\n` +
+        symbolLine +
+        `\nCode Content:\n${chunk.content.substring(0, 18000)}`
+      );
+    });
 
     const currentBatchNumber = Math.floor(i / BATCH_SIZE) + 1;
     const totalBatches = Math.ceil(allCodeChunks.length / BATCH_SIZE);
@@ -222,6 +286,7 @@ async function processCodebase() {
         embeddingsData.push({
           repository: batch[index].repository,
           filePath: batch[index].filePath,
+          symbol: batch[index].symbol,
           content: batch[index].content, // 원본 내용도 저장
           vector: vector,
         });
