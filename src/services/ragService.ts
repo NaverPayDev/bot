@@ -11,18 +11,26 @@ interface EmbeddingData {
   filePath: string;
   content: string;
   vector: number[];
+  norm: number;
 }
 
 let loadedEmbeddings: EmbeddingData[] = [];
 
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
+function computeNorm(vec: number[]): number {
+  return Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
+}
+
+function cosineSimilarity(
+  vecA: number[],
+  normA: number,
+  vecB: number[],
+  normB: number
+): number {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-  const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-  const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  if (magnitudeA === 0 || magnitudeB === 0) {
+  if (normA === 0 || normB === 0) {
     return 0;
   }
-  return dotProduct / (magnitudeA * magnitudeB);
+  return dotProduct / (normA * normB);
 }
 
 /**
@@ -81,6 +89,9 @@ export function loadEmbeddingsData(context: vscode.ExtensionContext): void {
     if (fs.existsSync(filePath)) {
       const fileContent = fs.readFileSync(filePath, "utf-8");
       loadedEmbeddings = JSON.parse(fileContent); // 모듈 스코프 변수에 할당
+      loadedEmbeddings.forEach((e) => {
+        e.norm = typeof e.norm === "number" ? e.norm : computeNorm(e.vector);
+      });
       vscode.window.showInformationMessage(
         `[Pie Bot] ${loadedEmbeddings.length}개의 코드 임베딩을 로드했습니다.`
       );
@@ -124,9 +135,15 @@ export function searchAndRerank(
   }
 
   // 1단계: 코사인 유사도 기반 초기 검색
+  const queryNorm = computeNorm(queryVector);
   const initialResults = loadedEmbeddings.map((data) => ({
     ...data,
-    similarity: cosineSimilarity(queryVector, data.vector), // 각 데이터와 질문 벡터 간 유사도 계산
+    similarity: cosineSimilarity(
+      queryVector,
+      queryNorm,
+      data.vector,
+      data.norm
+    ), // 각 데이터와 질문 벡터 간 유사도 계산
   }));
   initialResults.sort((a, b) => b.similarity! - a.similarity!); // 유사도 높은 순으로 정렬
 
