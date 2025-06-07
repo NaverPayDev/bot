@@ -1,28 +1,17 @@
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
+import naverpay from '@naverpay/eslint-config'
 
-export default [{
-    files: ["**/*.ts"],
-}, {
-    plugins: {
-        "@typescript-eslint": typescriptEslint,
+export default [
+    {
+        ignores: ['**/dist/**', './data/**', './node_modules/**'],
     },
-
-    languageOptions: {
-        parser: tsParser,
-        ecmaVersion: 2022,
-        sourceType: "module",
+    ...naverpay.configs.node,
+    ...naverpay.configs.typescript,
+    ...naverpay.configs.packageJson,
+    {
+        rules: {
+            'no-console': 'off', // Allow console statements
+            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-require-imports': 'off',
+        },
     },
-
-    rules: {
-        "@typescript-eslint/naming-convention": ["warn", {
-            selector: "import",
-            format: ["camelCase", "PascalCase"],
-        }],
-
-        curly: "warn",
-        eqeqeq: "warn",
-        "no-throw-literal": "warn",
-        semi: "warn",
-    },
-}];
+]

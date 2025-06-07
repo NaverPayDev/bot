@@ -1,83 +1,91 @@
 {
-  "name": "pie-bot",
-  "displayName": "pie bot",
-  "description": "",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.100.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [
-    "onCommand:pie-bot.askPie",
-    "onCommand:pie-bot.setApiKey"
-  ],
-  "main": "./dist/extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "pie-bot.askPie",
-        "title": "Ask Pie (@pie)"
-      },
-      {
-        "command": "pie-bot.setApiKey",
-        "title": "Pie Bot: Set Gemini API Key"
-      }
+    "name": "pie-bot",
+    "displayName": "pie bot",
+    "description": "",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.100.0"
+    },
+    "categories": [
+        "Other"
     ],
-    "keybindings": [
-      {
-        "command": "pie-bot.askPie",
-        "key": "ctrl+alt+p",
-        "mac": "cmd+alt+p",
-        "when": "editorTextFocus"
-      }
+    "activationEvents": [
+        "onCommand:pie-bot.askPie",
+        "onCommand:pie-bot.setApiKey"
     ],
-    "menus": {
-      "editor/context": [
-        {
-          "when": "editorTextFocus",
-          "command": "pie-bot.askPie",
-          "group": "navigation@5"
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "pie-bot.askPie",
+                "title": "Ask Pie (@pie)"
+            },
+            {
+                "command": "pie-bot.setApiKey",
+                "title": "Pie Bot: Set Gemini API Key"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "pie-bot.askPie",
+                "key": "ctrl+alt+p",
+                "mac": "cmd+alt+p",
+                "when": "editorTextFocus"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "editorTextFocus",
+                    "command": "pie-bot.askPie",
+                    "group": "navigation@5"
+                }
+            ]
         }
-      ]
+    },
+    "scripts": {
+        "vscode:prepublish": "pnpm run package",
+        "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+        "watch": "npm-run-all -p watch:*",
+        "watch:esbuild": "node esbuild.js --watch",
+        "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+        "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+        "check-types": "tsc --noEmit",
+        "lint": "eslint \"**/*.{js,jsx,ts,tsx}\"",
+        "test": "vscode-test",
+        "lint:fix": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix",
+        "prettier": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,jsx,json}\"",
+        "prettier:fix": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,jsx,json}\"",
+        "markdownlint": "markdownlint \"**/*.md\"",
+        "markdownlint:fix": "markdownlint --fix \"**/*.md\""
+    },
+    "devDependencies": {
+        "@naverpay/eslint-config": "^2.2.5",
+        "@naverpay/markdown-lint": "^0.0.3",
+        "@naverpay/prettier-config": "^1.0.1",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "20.x",
+        "@types/vscode": "^1.100.0",
+        "@typescript-eslint/eslint-plugin": "^8.31.1",
+        "@typescript-eslint/parser": "^8.31.1",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.5.2",
+        "esbuild": "^0.25.3",
+        "eslint": "^9.25.1",
+        "npm-run-all": "^4.1.5",
+        "typescript": "^5.8.3"
+    },
+    "packageManager": "pnpm@10.11.0",
+    "dependencies": {
+        "@google/generative-ai": "^0.24.1",
+        "@types/fs-extra": "^11.0.4",
+        "@types/glob": "^8.1.0",
+        "dotenv": "^16.5.0",
+        "fs-extra": "^11.3.0",
+        "glob": "^11.0.2",
+        "hnswlib-node": "^3.0.0"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "pnpm run package",
-    "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
-    "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "node esbuild.js --watch",
-    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-    "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
-    "check-types": "tsc --noEmit",
-    "lint": "eslint src",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "20.x",
-    "@types/vscode": "^1.100.0",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.5.2",
-    "esbuild": "^0.25.3",
-    "eslint": "^9.25.1",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.3"
-  },
-  "packageManager": "pnpm@10.11.0",
-  "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "@types/fs-extra": "^11.0.4",
-    "@types/glob": "^8.1.0",
-    "dotenv": "^16.5.0",
-    "fs-extra": "^11.3.0",
-    "glob": "^11.0.2",
-    "hnswlib-node": "^3.0.0"
-  }
 }
