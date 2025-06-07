@@ -1,39 +1,37 @@
-import * as vscode from "vscode";
-import * as path from "path";
-import * as fs from "fs";
-import { VectorIndex } from "./vectorIndex";
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 
-const EMBEDDINGS_FILE_PATH = "data/naverpay_embeddings.json";
-const INITIAL_SEARCH_K = 15;
-const FINAL_TOP_K = 3;
+import * as vscode from 'vscode'
+
+import {scoreRelevance} from './geminiApiService'
+import {VectorIndex} from './vectorIndex'
+
+const EMBEDDINGS_FILE_PATH = 'data/naverpay_embeddings.json'
+const INITIAL_SEARCH_K = 15
+const FINAL_TOP_K = 3
 
 interface EmbeddingData {
-  repository: string;
-  filePath: string;
-  symbol?: string;
-  content: string;
-  vector: number[];
-  norm: number;
+    repository: string
+    filePath: string
+    symbol?: string
+    content: string
+    vector: number[]
+    norm: number
 }
 
-let loadedEmbeddings: EmbeddingData[] = [];
-let vectorIndex: VectorIndex | null = null;
+let loadedEmbeddings: EmbeddingData[] = []
+let vectorIndex: VectorIndex | null = null
 
 function computeNorm(vec: number[]): number {
-  return Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
+    return Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0))
 }
 
-function cosineSimilarity(
-  vecA: number[],
-  normA: number,
-  vecB: number[],
-  normB: number
-): number {
-  const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-  if (normA === 0 || normB === 0) {
-    return 0;
-  }
-  return dotProduct / (normA * normB);
+function cosineSimilarity(vecA: number[], normA: number, vecB: number[], normB: number): number {
+    const dotProduct = vecA.reduce((sum, a, index) => sum + a * vecB[index], 0)
+    if (normA === 0 || normB === 0) {
+        return 0
+    }
+    return dotProduct / (normA * normB)
 }
 
 /**
@@ -57,70 +55,64 @@ function cosineSimilarity(
  * @returns 추출된 키워드 문자열 배열
  */
 function extractKeywords(query: string): string[] {
-  const stopWords = [
-    "을",
-    "를",
-    "이",
-    "가",
-    "은",
-    "는",
-    "의",
-    "에",
-    "좀",
-    "줘",
-    "로",
-    "바꿔줘",
-    "알려줘",
-    "사용법",
-    "말고",
-    "대신",
-    "관련된",
-    "대한",
-    "대해",
-  ];
-  return query
-    .toLowerCase()
-    .replace(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, " ")
-    .split(/\s+/)
-    .filter((word) => word.length > 1 && !stopWords.includes(word));
+    const stopWords = new Set([
+        '을',
+        '를',
+        '이',
+        '가',
+        '은',
+        '는',
+        '의',
+        '에',
+        '좀',
+        '줘',
+        '로',
+        '바꿔줘',
+        '알려줘',
+        '사용법',
+        '말고',
+        '대신',
+        '관련된',
+        '대한',
+        '대해',
+    ])
+    return query
+        .toLowerCase()
+        .replaceAll(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, ' ')
+        .split(/\s+/)
+        .filter((word) => word.length > 1 && !stopWords.has(word))
 }
 
 export function loadEmbeddingsData(context: vscode.ExtensionContext): void {
-  const filePath = path.join(context.extensionPath, EMBEDDINGS_FILE_PATH);
-  console.log(`[Pie Bot] 임베딩 파일 로딩 시도: ${filePath}`);
-  try {
-    if (fs.existsSync(filePath)) {
-      const fileContent = fs.readFileSync(filePath, "utf-8");
-      loadedEmbeddings = JSON.parse(fileContent); // 모듈 스코프 변수에 할당
-      loadedEmbeddings.forEach((e) => {
-        e.norm = typeof e.norm === "number" ? e.norm : computeNorm(e.vector);
-      });
-      const dim = loadedEmbeddings[0]?.vector.length;
-      if (typeof dim === "number" && dim > 0) {
-        vectorIndex = new VectorIndex(dim);
-        vectorIndex.build(loadedEmbeddings.map((e) => e.vector));
-      } else {
-        vectorIndex = null;
-      }
-      vscode.window.showInformationMessage(
-        `[Pie Bot] ${loadedEmbeddings.length}개의 코드 임베딩을 로드했습니다.`
-      );
-    } else {
-      vscode.window.showErrorMessage(
-        `[Pie Bot] 임베딩 파일을 찾을 수 없습니다! (${filePath})`
-      );
-      loadedEmbeddings = [];
+    const filePath = path.join(context.extensionPath, EMBEDDINGS_FILE_PATH)
+    console.log(`[Pie Bot] 임베딩 파일 로딩 시도: ${filePath}`)
+    try {
+        if (fs.existsSync(filePath)) {
+            const fileContent = fs.readFileSync(filePath, 'utf8')
+            loadedEmbeddings = JSON.parse(fileContent) // 모듈 스코프 변수에 할당
+            for (const e of loadedEmbeddings) {
+                e.norm = typeof e.norm === 'number' ? e.norm : computeNorm(e.vector)
+            }
+            const dim = loadedEmbeddings[0]?.vector.length
+            if (typeof dim === 'number' && dim > 0) {
+                vectorIndex = new VectorIndex(dim)
+                vectorIndex.build(loadedEmbeddings.map((e) => e.vector))
+            } else {
+                vectorIndex = null
+            }
+            vscode.window.showInformationMessage(`[Pie Bot] ${loadedEmbeddings.length}개의 코드 임베딩을 로드했습니다.`)
+        } else {
+            vscode.window.showErrorMessage(`[Pie Bot] 임베딩 파일을 찾을 수 없습니다! (${filePath})`)
+            loadedEmbeddings = []
+        }
+    } catch (error: any) {
+        vscode.window.showErrorMessage(`[Pie Bot] 임베딩 파일 로딩 중 오류 발생: ${error.message}`)
+        loadedEmbeddings = []
     }
-  } catch (error: any) {
-    vscode.window.showErrorMessage(
-      `[Pie Bot] 임베딩 파일 로딩 중 오류 발생: ${error.message}`
-    );
-    loadedEmbeddings = [];
-  }
 }
 
 export function getLoadedEmbeddingsCount(): number {
-  return loadedEmbeddings.length;
+    return loadedEmbeddings.length
 }
 
 /**
@@ -136,105 +128,99 @@ export function getLoadedEmbeddingsCount(): number {
  * @param userQuery 사용자의 원본 질문 텍스트 문자열입니다 (키워드 추출에 사용됨).
  * @returns Reranking 과정을 거쳐 최종적으로 선정된 상위 `FINAL_TOP_K`개의 `EmbeddingData` 객체 배열을 반환합니다. 로드된 임베딩 데이터가 없거나 질문 벡터가 유효하지 않으면 빈 배열을 반환합니다.
  */
-import { scoreRelevance } from "./geminiApiService";
 
 export async function searchAndRerank(
-  queryVector: number[],
-  userQuery: string,
-  apiKey?: string
+    queryVector: number[],
+    userQuery: string,
+    apiKey?: string,
 ): Promise<EmbeddingData[]> {
-  if (loadedEmbeddings.length === 0 || !queryVector) {
-    return [];
-  }
-
-  // 1단계: 벡터 검색 (빠른 인덱스가 있으면 활용)
-  let initialResults: (EmbeddingData & { similarity: number })[];
-  if (vectorIndex) {
-    const neighbors = vectorIndex.search(queryVector, INITIAL_SEARCH_K);
-    initialResults = neighbors.map(({ id, distance }) => ({
-      ...loadedEmbeddings[id],
-      similarity: 1 - distance,
-    }));
-  } else {
-    const queryNorm = computeNorm(queryVector);
-    initialResults = loadedEmbeddings.map((data) => ({
-      ...data,
-      similarity: cosineSimilarity(queryVector, queryNorm, data.vector, data.norm),
-    }));
-    initialResults.sort((a, b) => b.similarity! - a.similarity!);
-  }
-
-  // 2단계 (Reranking)를 위한 후보군 선정
-  const candidates = initialResults.slice(0, INITIAL_SEARCH_K);
-  const keywords = extractKeywords(userQuery); // 질문에서 키워드 추출
-
-  const rerankedResults = candidates.map((candidate) => {
-    let rerankScore = candidate.similarity!; // 기본 점수는 코사인 유사도
-    const lowerFilePath = candidate.filePath.toLowerCase();
-    const lowerContent = candidate.content.toLowerCase();
-    const lowerSymbol = candidate.symbol ? candidate.symbol.toLowerCase() : "";
-
-    // 키워드 일치 여부에 따른 점수 가산
-    keywords.forEach((keyword) => {
-      if (lowerFilePath.includes(keyword)) {
-        rerankScore += 0.15; // 파일 경로에 키워드 포함 시 가점
-      }
-      if (lowerContent.includes(keyword)) {
-        rerankScore += 0.05; // 내용에 키워드 포함 시 가점
-      }
-      if (lowerSymbol.includes(keyword)) {
-        rerankScore += 0.1; // 심볼명에 키워드 포함 시 가점
-      }
-    });
-
-    // 특정 파일 유형 또는 경로에 따른 점수 조정 (페널티 또는 보너스)
-    if (
-      /[._-](test|spec|mock)\.[jt]sx?$/i.test(lowerFilePath) || // 테스트 파일 확장자 패턴
-      /(\/__tests__\/|\/test[s]?\/)/i.test(lowerFilePath) // 테스트 폴더 경로 패턴
-    ) {
-      rerankScore -= 0.4; // 테스트 파일에 페널티
+    if (loadedEmbeddings.length === 0 || !queryVector) {
+        return []
     }
-    if (/\/src\//i.test(lowerFilePath) && !lowerFilePath.includes("index")) {
-      rerankScore -= 0.05; // 'src' 폴더 하위 파일 (index 파일 제외)에 약간의 페널티
+
+    // 1단계: 벡터 검색 (빠른 인덱스가 있으면 활용)
+    let initialResults: (EmbeddingData & {similarity: number})[]
+    if (vectorIndex) {
+        const neighbors = vectorIndex.search(queryVector, INITIAL_SEARCH_K)
+        initialResults = neighbors.map(({id, distance}) => ({
+            ...loadedEmbeddings[id],
+            similarity: 1 - distance,
+        }))
+    } else {
+        const queryNorm = computeNorm(queryVector)
+        initialResults = loadedEmbeddings.map((data) => ({
+            ...data,
+            similarity: cosineSimilarity(queryVector, queryNorm, data.vector, data.norm),
+        }))
+        initialResults.sort((a, b) => b.similarity! - a.similarity!)
     }
-    if (/\/?index\.[jt]sx?$/i.test(lowerFilePath)) {
-      rerankScore += 0.2; // 'index' 파일에 보너스
+
+    // 2단계 (Reranking)를 위한 후보군 선정
+    const candidates = initialResults.slice(0, INITIAL_SEARCH_K)
+    const keywords = extractKeywords(userQuery) // 질문에서 키워드 추출
+
+    const rerankedResults = candidates.map((candidate) => {
+        let rerankScore = candidate.similarity! // 기본 점수는 코사인 유사도
+        const lowerFilePath = candidate.filePath.toLowerCase()
+        const lowerContent = candidate.content.toLowerCase()
+        const lowerSymbol = candidate.symbol ? candidate.symbol.toLowerCase() : ''
+
+        // 키워드 일치 여부에 따른 점수 가산
+        for (const keyword of keywords) {
+            if (lowerFilePath.includes(keyword)) {
+                rerankScore += 0.15 // 파일 경로에 키워드 포함 시 가점
+            }
+            if (lowerContent.includes(keyword)) {
+                rerankScore += 0.05 // 내용에 키워드 포함 시 가점
+            }
+            if (lowerSymbol.includes(keyword)) {
+                rerankScore += 0.1 // 심볼명에 키워드 포함 시 가점
+            }
+        }
+
+        // 특정 파일 유형 또는 경로에 따른 점수 조정 (페널티 또는 보너스)
+        if (
+            /[._-](test|spec|mock)\.[jt]sx?$/i.test(lowerFilePath) || // 테스트 파일 확장자 패턴
+            /(\/__tests__\/|\/test[s]?\/)/i.test(lowerFilePath) // 테스트 폴더 경로 패턴
+        ) {
+            rerankScore -= 0.4 // 테스트 파일에 페널티
+        }
+        if (/\/src\//i.test(lowerFilePath) && !lowerFilePath.includes('index')) {
+            rerankScore -= 0.05 // 'src' 폴더 하위 파일 (index 파일 제외)에 약간의 페널티
+        }
+        if (/\/?index\.[jt]sx?$/i.test(lowerFilePath)) {
+            rerankScore += 0.2 // 'index' 파일에 보너스
+        }
+        return {...candidate, rerankScore} // rerankScore 속성 추가
+    })
+
+    // 최종 Rerank 점수 기준으로 정렬
+    rerankedResults.sort((a, b) => b.rerankScore! - a.rerankScore!)
+
+    // 디버깅을 위해 상위 5개 결과 로깅
+    console.log(
+        '[Pie Bot] Rerank 결과 (Top 5):',
+        rerankedResults.slice(0, 5).map((r) => ({
+            repo: r.repository,
+            path: r.filePath,
+            symbol: r.symbol,
+            score: r.rerankScore!.toFixed(4), // 소수점 4자리까지 표시
+        })),
+    )
+
+    let finalResults = rerankedResults
+    if (apiKey) {
+        const topForScoring = rerankedResults.slice(0, 5)
+        for (const candidate of topForScoring) {
+            const score = await scoreRelevance(apiKey, userQuery, candidate.content.slice(0, 1000))
+            if (typeof score === 'number') {
+                candidate.rerankScore = candidate.rerankScore! * 0.7 + score * 0.3
+            }
+        }
+        topForScoring.sort((a, b) => b.rerankScore! - a.rerankScore!)
+        finalResults = topForScoring
     }
-    return { ...candidate, rerankScore }; // rerankScore 속성 추가
-  });
 
-  // 최종 Rerank 점수 기준으로 정렬
-  rerankedResults.sort((a, b) => b.rerankScore! - a.rerankScore!);
-
-  // 디버깅을 위해 상위 5개 결과 로깅
-  console.log(
-    "[Pie Bot] Rerank 결과 (Top 5):",
-    rerankedResults.slice(0, 5).map((r) => ({
-      repo: r.repository,
-      path: r.filePath,
-      symbol: r.symbol,
-      score: r.rerankScore!.toFixed(4), // 소수점 4자리까지 표시
-    }))
-  );
-
-  let finalResults = rerankedResults;
-  if (apiKey) {
-    const topForScoring = rerankedResults.slice(0, 5);
-    for (const candidate of topForScoring) {
-      const score = await scoreRelevance(
-        apiKey,
-        userQuery,
-        candidate.content.substring(0, 1000)
-      );
-      if (typeof score === "number") {
-        candidate.rerankScore =
-          candidate.rerankScore! * 0.7 + score * 0.3;
-      }
-    }
-    topForScoring.sort((a, b) => b.rerankScore! - a.rerankScore!);
-    finalResults = topForScoring;
-  }
-
-  // 최종적으로 상위 FINAL_TOP_K 개 결과 반환
-  return finalResults.slice(0, FINAL_TOP_K);
+    // 최종적으로 상위 FINAL_TOP_K 개 결과 반환
+    return finalResults.slice(0, FINAL_TOP_K)
 }
