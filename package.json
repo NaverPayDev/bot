@@ -1,19 +1,32 @@
 {
     "name": "pie-bot",
     "displayName": "pie bot",
-    "description": "",
     "version": "0.0.1",
-    "engines": {
-        "vscode": "^1.100.0"
-    },
+    "description": "",
     "categories": [
         "Other"
     ],
-    "activationEvents": [
-        "onCommand:pie-bot.askPie",
-        "onCommand:pie-bot.setApiKey"
-    ],
+    "type": "commonjs",
     "main": "./dist/extension.js",
+    "scripts": {
+        "check-types": "tsc --noEmit",
+        "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+        "compile-tests": "tsc -p . --outDir out",
+        "lint": "eslint \"**/*.{js,jsx,ts,tsx,json}\"",
+        "lint:fix": "eslint \"**/*.{js,jsx,ts,tsx,json}\" --fix",
+        "markdownlint": "markdownlint \"**/*.md\"",
+        "markdownlint:fix": "markdownlint --fix \"**/*.md\"",
+        "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+        "prettier": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,jsx,json}\"",
+        "prettier:fix": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,jsx,json}\"",
+        "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+        "test": "vscode-test",
+        "vscode:prepublish": "pnpm run package",
+        "watch": "npm-run-all -p watch:*",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "watch:esbuild": "node esbuild.js --watch",
+        "watch:tsc": "tsc --noEmit --watch --project tsconfig.json"
+    },
     "contributes": {
         "commands": [
             {
@@ -43,24 +56,14 @@
             ]
         }
     },
-    "scripts": {
-        "vscode:prepublish": "pnpm run package",
-        "compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
-        "watch": "npm-run-all -p watch:*",
-        "watch:esbuild": "node esbuild.js --watch",
-        "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-        "package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
-        "compile-tests": "tsc -p . --outDir out",
-        "watch-tests": "tsc -p . -w --outDir out",
-        "pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
-        "check-types": "tsc --noEmit",
-        "lint": "eslint \"**/*.{js,jsx,ts,tsx}\"",
-        "test": "vscode-test",
-        "lint:fix": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix",
-        "prettier": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,jsx,json}\"",
-        "prettier:fix": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,jsx,json}\"",
-        "markdownlint": "markdownlint \"**/*.md\"",
-        "markdownlint:fix": "markdownlint --fix \"**/*.md\""
+    "dependencies": {
+        "@google/generative-ai": "^0.24.1",
+        "@types/fs-extra": "^11.0.4",
+        "@types/glob": "^8.1.0",
+        "dotenv": "^16.5.0",
+        "fs-extra": "^11.3.0",
+        "glob": "^11.0.2",
+        "hnswlib-node": "^3.0.0"
     },
     "devDependencies": {
         "@naverpay/eslint-config": "^2.2.5",
@@ -80,13 +83,7 @@
         "typescript": "^5.8.3"
     },
     "packageManager": "pnpm@10.11.0",
-    "dependencies": {
-        "@google/generative-ai": "^0.24.1",
-        "@types/fs-extra": "^11.0.4",
-        "@types/glob": "^8.1.0",
-        "dotenv": "^16.5.0",
-        "fs-extra": "^11.3.0",
-        "glob": "^11.0.2",
-        "hnswlib-node": "^3.0.0"
+    "engines": {
+        "vscode": "^1.100.0"
     }
 }

@@ -2,7 +2,7 @@ import naverpay from '@naverpay/eslint-config'
 
 export default [
     {
-        ignores: ['**/dist/**', './data/**', './node_modules/**'],
+        ignores: ['**/dist/**', './data/**', './node_modules/**', './data/naverpay_embeddings.json'],
     },
     ...naverpay.configs.node,
     ...naverpay.configs.typescript,

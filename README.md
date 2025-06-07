@@ -240,3 +240,12 @@ Pie Bot은 최신 AI 기술을 활용합니다.
 - **Pie Bot 적용:** 코사인 유사도만으로 상위 결과를 뽑은 후, 해당 결과들의 파일 경로, 내용에 사용자 질문의 키워드가 포함되어 있는지, 테스트 코드인지, `index` 파일인지 등의 추가적인 휴리스틱 규칙을 적용하여 점수를 재계산하고 최종적으로 LLM에게 제공할 참고 자료의 순위를 조정합니다.
 - **더 알아보기:**
   - [Improving RAG Performance with Rerankers (Pinecone)](https://www.pinecone.io/learn/series/rag/rerankers/)
+
+## 실행시에 오류가 난다면?
+
+```bash
+cd node_modules/.pnpm/hnswlib-node@3.0.0/node_modules/hnswlib-node
+npx node-gyp rebuild
+```
+
+> 성공하면 `build/Release/addon.node`가 생성되어야 하며, 이 파일이 존재해야 extension이 정상 작동합니다.
