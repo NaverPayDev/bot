@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
+import { VectorIndex } from "./vectorIndex";
 
 const EMBEDDINGS_FILE_PATH = "data/naverpay_embeddings.json";
 const INITIAL_SEARCH_K = 15;
@@ -16,6 +17,7 @@ interface EmbeddingData {
 }
 
 let loadedEmbeddings: EmbeddingData[] = [];
+let vectorIndex: VectorIndex | null = null;
 
 function computeNorm(vec: number[]): number {
   return Math.sqrt(vec.reduce((sum, v) => sum + v * v, 0));
@@ -93,6 +95,13 @@ export function loadEmbeddingsData(context: vscode.ExtensionContext): void {
       loadedEmbeddings.forEach((e) => {
         e.norm = typeof e.norm === "number" ? e.norm : computeNorm(e.vector);
       });
+      const dim = loadedEmbeddings[0]?.vector.length;
+      if (typeof dim === "number" && dim > 0) {
+        vectorIndex = new VectorIndex(dim);
+        vectorIndex.build(loadedEmbeddings.map((e) => e.vector));
+      } else {
+        vectorIndex = null;
+      }
       vscode.window.showInformationMessage(
         `[Pie Bot] ${loadedEmbeddings.length}개의 코드 임베딩을 로드했습니다.`
       );
@@ -138,18 +147,22 @@ export async function searchAndRerank(
     return [];
   }
 
-  // 1단계: 코사인 유사도 기반 초기 검색
-  const queryNorm = computeNorm(queryVector);
-  const initialResults = loadedEmbeddings.map((data) => ({
-    ...data,
-    similarity: cosineSimilarity(
-      queryVector,
-      queryNorm,
-      data.vector,
-      data.norm
-    ), // 각 데이터와 질문 벡터 간 유사도 계산
-  }));
-  initialResults.sort((a, b) => b.similarity! - a.similarity!); // 유사도 높은 순으로 정렬
+  // 1단계: 벡터 검색 (빠른 인덱스가 있으면 활용)
+  let initialResults: (EmbeddingData & { similarity: number })[];
+  if (vectorIndex) {
+    const neighbors = vectorIndex.search(queryVector, INITIAL_SEARCH_K);
+    initialResults = neighbors.map(({ id, distance }) => ({
+      ...loadedEmbeddings[id],
+      similarity: 1 - distance,
+    }));
+  } else {
+    const queryNorm = computeNorm(queryVector);
+    initialResults = loadedEmbeddings.map((data) => ({
+      ...data,
+      similarity: cosineSimilarity(queryVector, queryNorm, data.vector, data.norm),
+    }));
+    initialResults.sort((a, b) => b.similarity! - a.similarity!);
+  }
 
   // 2단계 (Reranking)를 위한 후보군 선정
   const candidates = initialResults.slice(0, INITIAL_SEARCH_K);
