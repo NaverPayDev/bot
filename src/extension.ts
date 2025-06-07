@@ -141,9 +141,10 @@ export function activate(context: vscode.ExtensionContext) {
               increment: 30,
               message: "관련 코드를 검색 중입니다...",
             });
-            const searchResults = ragService.searchAndRerank(
+            const searchResults = await ragService.searchAndRerank(
               queryVector,
-              userQueryText
+              userQueryText,
+              apiKey
             );
 
             let ragContext =

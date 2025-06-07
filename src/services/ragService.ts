@@ -127,10 +127,13 @@ export function getLoadedEmbeddingsCount(): number {
  * @param userQuery 사용자의 원본 질문 텍스트 문자열입니다 (키워드 추출에 사용됨).
  * @returns Reranking 과정을 거쳐 최종적으로 선정된 상위 `FINAL_TOP_K`개의 `EmbeddingData` 객체 배열을 반환합니다. 로드된 임베딩 데이터가 없거나 질문 벡터가 유효하지 않으면 빈 배열을 반환합니다.
  */
-export function searchAndRerank(
+import { scoreRelevance } from "./geminiApiService";
+
+export async function searchAndRerank(
   queryVector: number[],
-  userQuery: string
-): EmbeddingData[] {
+  userQuery: string,
+  apiKey?: string
+): Promise<EmbeddingData[]> {
   if (loadedEmbeddings.length === 0 || !queryVector) {
     return [];
   }
@@ -201,6 +204,24 @@ export function searchAndRerank(
     }))
   );
 
+  let finalResults = rerankedResults;
+  if (apiKey) {
+    const topForScoring = rerankedResults.slice(0, 5);
+    for (const candidate of topForScoring) {
+      const score = await scoreRelevance(
+        apiKey,
+        userQuery,
+        candidate.content.substring(0, 1000)
+      );
+      if (typeof score === "number") {
+        candidate.rerankScore =
+          candidate.rerankScore! * 0.7 + score * 0.3;
+      }
+    }
+    topForScoring.sort((a, b) => b.rerankScore! - a.rerankScore!);
+    finalResults = topForScoring;
+  }
+
   // 최종적으로 상위 FINAL_TOP_K 개 결과 반환
-  return rerankedResults.slice(0, FINAL_TOP_K);
+  return finalResults.slice(0, FINAL_TOP_K);
 }

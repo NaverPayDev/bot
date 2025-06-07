@@ -73,3 +73,25 @@ export async function generateAnswer(
     return undefined;
   }
 }
+
+export async function scoreRelevance(
+  apiKey: string,
+  userQuery: string,
+  candidateText: string
+): Promise<number | undefined> {
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: GENERATIVE_MODEL_NAME });
+    const prompt = `다음 질문과 코드 스니펫의 관련도를 0과 1 사이의 숫자로만 답해주세요.\n\n질문: ${userQuery}\n\n코드:\n${candidateText}\n`;
+    const result = await model.generateContent(prompt);
+    const text = (await result.response).text().trim();
+    const match = text.match(/\d+(?:\.\d+)?/);
+    if (match) {
+      return parseFloat(match[0]);
+    }
+    return undefined;
+  } catch (error: any) {
+    console.error("[Pie Bot] Gemini 관련도 평가 오류:", error);
+    return undefined;
+  }
+}
